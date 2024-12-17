@@ -151,11 +151,11 @@ AUTH_USER_MODEL = 'server.User'
 
 AWS_S3_ACCESS_KEY_ID = os.environ.get("AWS_S3_ACCESS_KEY_ID")
 AWS_S3_SECRET_ACCESS_KEY = os.environ.get("AWS_S3_SECRET_ACCESS_KEY")
-AWS_STORAGE_BUCKET_NAME = 'flowergarden'
+AWS_STORAGE_BUCKET_NAME = ''
 AWS_S3_SIGNATURE_VERSION = 's3v4'
 # AWS_S3_CUSTOM_DOMAIN = 'static.blasome.xyz'
 S3_STATIC_DIR = ''
-AWS_S3_ENDPOINT_URL = f'https://5b9b7243bdbd4c8375b878eba3ac71e5.r2.cloudflarestorage.com'
+AWS_S3_ENDPOINT_URL = f'https://pub-9c1b5e6896794e9997c1b396dfa377bb.r2.dev'
 
 if DEBUG:
     STATIC_URL = 'satitc/'
