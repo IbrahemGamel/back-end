@@ -28,7 +28,7 @@ class Post(models.Model):
     postid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     userid = models.ForeignKey(User, on_delete=models.CASCADE)
     caption = models.TextField(null=True)
-    image = models.TextField(null=True)
+    image = models.ImageField(upload_to='images', null=True)
     likes_no = models.BigIntegerField(default=0)
     createdAt = models.DateTimeField(auto_now_add=True)
     editedAt = models.DateTimeField(auto_now=True)

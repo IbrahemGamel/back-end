@@ -67,9 +67,11 @@ def post(request):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     elif request.method == 'POST':
-        data = request.data.__dict__ 
-        data['userid'] = request.user.pk
-        serializer = PostSerializer(data=data)
+        serializer = PostSerializer(data={
+            'caption': request.data.get('caption'),
+            'image': request.FILES.get('image'),
+            'userid': request.user.pk
+        }, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
