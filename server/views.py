@@ -1,9 +1,9 @@
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, HttpRequest
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404
 
-from server.models import User, Post, Like
-from server.serializers import UserSerializer, PostSerializer, LikeSerializer
+from server.models import User, Post, Like, Follow
+from server.serializers import UserSerializer, PostSerializer, LikeSerializer, FollowSerializer
 
 from rest_framework.parsers import JSONParser
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
@@ -40,7 +40,17 @@ def user(request):
             return Response({'token': token.key, 'user': serializer.data}, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
- 
+
+@api_view(['DELETE'])
+@authentication_classes([SessionAuthentication, TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def user_delete(request):
+    if request.user.pk != request.data.get('userid'):
+        return Response({'detail': 'You are not authorized to delete this user'}, status=status.HTTP_401_UNAUTHORIZED)
+    user = get_object_or_404(User, username=request.data.get('username'))
+    user.delete()
+    return Response({'success': f'user {request.data.get("username")} has been deleted'}, status=status.HTTP_200_OK)
+
 @api_view(['POST'])
 def login(request):
     user = get_object_or_404(User, username=request.data.get('username'))
@@ -55,19 +65,15 @@ def login(request):
 @permission_classes([IsAuthenticated])
 def post(request):
     '''
-    List all posts, edit, or add a new post.
+    List all users posts, edit, or add a new post.
     '''
     
     if request.method == 'GET':
-        postid = request.data.get('postid')
-        if postid:
-            post = get_object_or_404(Post, pk=postid)
-            serializer = PostSerializer(post)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        
-        post = Post.objects.all()
+        userid = request.user.userid
+        post = Post.objects.filter(userid=userid)
         serializer = PostSerializer(post, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
     elif request.method == 'POST':
         data = request.data.__dict__ 
         data['userid'] = request.user.pk
@@ -77,8 +83,25 @@ def post(request):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'DELETE':
+        postid = request.data.get('postid')
+        post = get_object_or_404(Post, postid=postid)
+        post.delete()
+        return Response({'success': f'post {postid} has been deleted'}, status=status.HTTP_200_OK)
     elif request.method == 'PUT':
         ... # implemented in the next version
+
+@api_view(['GET'])
+@authentication_classes([SessionAuthentication, TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def post_details(request):
+    postid = request.data.get('postid')
+    if postid:
+        post = get_object_or_404(Post, pk=postid)
+        likes = Like.objects.filter(postid=postid)
+        serializer = PostSerializer(post)
+        return Response({'post': serializer.data, 'likes': likes}, status=status.HTTP_200_OK)
+
 
 
 @api_view(['GET', 'POST', 'DELETE'])
@@ -90,19 +113,13 @@ def like(request):
     '''
     
     if request.method == 'GET':
-        likeid = request.data.get('likeid')
         postid = request.data.get('postid')
-        if likeid and postid:
-            return Response({'detail': 'Please provide either lilkeid or postid only'}, status=status.HTTP_200_OK)
-            
-        if likeid:
-            post = get_object_or_404(Like, pk=likeid)
-            serializer = LikeSerializer(instance=like)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        elif postid:
+        if postid:
             likes = Like.objects.filter(postid=postid)
             serializer = LikeSerializer(likes, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({'detail': 'Please provide postid in request body'}, status=status.HTTP_400_BAD_REQUEST)
             
         
     elif request.method == 'POST':
@@ -128,11 +145,46 @@ def like(request):
         like.postid.likes_no -= 1
         like.postid.save()
         like.delete()
-        return Response({'detail': f'like {request.data.get("likeid")} has been deleted'}, status=status.HTTP_200_OK)
-        
-            
+        return Response({'success': f'like {request.data.get("likeid")} has been deleted'}, status=status.HTTP_200_OK)
         
 
-    
-    
+@api_view(['GET'])
+@authentication_classes([SessionAuthentication, TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def like_details(request):
+    likeid = request.data.get('likeid')
+    postid = request.data.get('postid')
+    if likeid and postid:
+        return Response({'detail': 'Please provide either lilkeid or postid only'}, status=status.HTTP_200_OK)
         
+    if likeid:
+        post = get_object_or_404(Like, pk=likeid)
+        serializer = LikeSerializer(instance=like)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+@api_view(['GET', 'POST', 'DELETE'])
+@authentication_classes([SessionAuthentication, TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def follow(request: HttpRequest):
+    '''
+    GET Follows, creates one and deletes one.
+    '''
+    if request.method == 'GET':
+        userid = request.user.pk
+        follows = Follow.objects.filter(follower=userid)
+        serializer = FollowSerializer(follows, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    elif request.method == 'POST':
+        data = request.data.copy()
+        data['follower'] = request.user.pk
+        serializer = FollowSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'DELETE':
+        followid = request.data.get('followid')
+        follow = get_object_or_404(Follow, followid=followid)
+        follow.delete()
+        return Response({'success': f'follow {followid} has been deleted'}, status=status.HTTP_200_OK)

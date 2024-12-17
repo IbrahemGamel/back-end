@@ -16,6 +16,7 @@ class User(AbstractUser):
     bio = models.TextField(null=True, max_length=256)
     createdAt = models.DateTimeField(auto_now_add=True)
     editedAt = models.DateTimeField(auto_now=True)
+    lastactive = models.DateTimeField(null=True)
     
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
@@ -38,3 +39,16 @@ class Like(models.Model):
     postid = models.ForeignKey(Post, on_delete=models.CASCADE)
     createdAt = models.DateTimeField(auto_now_add=True)
     
+class Follow(models.Model):
+    followid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    follower = models.ForeignKey(User, related_name="following", on_delete=models.CASCADE)
+    following = models.ForeignKey(User, related_name="followers", on_delete=models.CASCADE)
+    createdAt = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('follower', 'following')
+
+    def __str__(self):
+        return f"{self.follower} follows {self.following}"
+    
+
