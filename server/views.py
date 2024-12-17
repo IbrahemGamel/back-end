@@ -17,6 +17,7 @@ from rest_framework.response import Response
 
 from hashlib import sha256        
 
+
 @api_view(['GET', 'POST'])
 def user(request):
     '''
@@ -41,15 +42,6 @@ def user(request):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['DELETE'])
-@authentication_classes([SessionAuthentication, TokenAuthentication])
-@permission_classes([IsAuthenticated])
-def user_delete(request):
-    if request.user.pk != request.data.get('userid'):
-        return Response({'detail': 'You are not authorized to delete this user'}, status=status.HTTP_401_UNAUTHORIZED)
-    user = get_object_or_404(User, username=request.data.get('username'))
-    user.delete()
-    return Response({'success': f'user {request.data.get("username")} has been deleted'}, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 def login(request):

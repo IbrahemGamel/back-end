@@ -4,7 +4,6 @@ from django.urls import path
 from server import views
 urlpatterns = [
     path('user', views.user),
-    path('user/delete', views.user_delete),
     path('login', views.login),
     path('post', views.post),
     path('like', views.like),
