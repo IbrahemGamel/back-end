@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-=#9zfrop7kvs&g-=f0h5q!em*6pc#es^yl&2z6g%afu8r1(hun'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,[::1]").split(",")
 
@@ -42,6 +42,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'server',
     'rest_framework.authtoken',
+    'storages',
+    'compressor', 
+    
 ]
 
 MIDDLEWARE = [
@@ -129,6 +132,9 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+COMPRESS_ROOT = BASE_DIR / 'static'
+
+COMPRESS_ENABLED = True
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_ROOT = os.path.join(PROJECT_DIR, 'static')
 
@@ -141,3 +147,32 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'server.User'
+
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+
+AWS_S3_ACCESS_KEY_ID = 'da1c1bae8d8f8e6755b181c007779702'
+AWS_S3_SECRET_ACCESS_KEY = '31e5ba713439fc649e1b7d929366a44da98ac50268afed0cb10ab26b3d6abdc5'
+AWS_STORAGE_BUCKET_NAME = 'flowergarden'
+AWS_S3_SIGNATURE_VERSION = 's3v4'
+AWS_S3_CUSTOM_DOMAIN = 'static.blasome.xyz'
+S3_STATIC_DIR = ''
+AWS_S3_ENDPOINT_URL = f'https://5b9b7243bdbd4c8375b878eba3ac71e5.r2.cloudflarestorage.com'
+
+
+if DEBUG:
+    STATIC_URL = 'satitc/'
+else:
+    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{S3_STATIC_DIR}'
+    STATICFILES_STORAGE = 'storages.backends.s3boto3.S3StaticStorage'
+    STATICFILES_DIRS = [
+        os.path.join(BASE_DIR, 'static'),
+        # os.path.join(BASE_DIR, 'static/CACHE')
+    ]
+    STATIC_ROOT = STATIC_URL
+
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    'compressor.finders.CompressorFinder',
+]
