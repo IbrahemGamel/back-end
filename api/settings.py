@@ -160,7 +160,7 @@ AWS_S3_ENDPOINT_URL = f'https://5b9b7243bdbd4c8375b878eba3ac71e5.r2.cloudflarest
 if DEBUG:
     STATIC_URL = 'satitc/'
 else:
-    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{S3_STATIC_DIR}'
+    STATIC_URL = f'satitc/'
     STATICFILES_STORAGE = 'storages.backends.s3boto3.S3StaticStorage'
     STATICFILES_DIRS = [
         os.path.join(BASE_DIR, 'static'),
