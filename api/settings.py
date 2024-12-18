@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-=#9zfrop7kvs&g-=f0h5q!em*6pc#es^yl&2z6g%afu8r1(hun
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,[::1]").split(",")
+ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,[::1],*").split(",")
 
 
 # Application definition
@@ -137,8 +137,7 @@ COMPRESS_ENABLED = True
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_ROOT = os.path.join(PROJECT_DIR, 'static')
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -151,25 +150,41 @@ AUTH_USER_MODEL = 'server.User'
 
 AWS_S3_ACCESS_KEY_ID='da1c1bae8d8f8e6755b181c007779702'
 AWS_S3_SECRET_ACCESS_KEY='31e5ba713439fc649e1b7d929366a44da98ac50268afed0cb10ab26b3d6abdc5'
-AWS_STORAGE_BUCKET_NAME = 'rewardapp'
+AWS_STORAGE_BUCKET_NAME = 'rewardstatic'
 AWS_S3_SIGNATURE_VERSION = 's3v4'
 AWS_S3_CUSTOM_DOMAIN = 'static.blasome.xyz'
-S3_STATIC_DIR = ''
-AWS_S3_ENDPOINT_URL = f'https://5b9b7243bdbd4c8375b878eba3ac71e5.eu.r2.cloudflarestorage.com'
+S3_STATIC_DIR = 'flowergarden'
+AWS_S3_ENDPOINT_URL = f'https://5b9b7243bdbd4c8375b878eba3ac71e5.r2.cloudflarestorage.com'
 
 if DEBUG:
     STATIC_URL = 'satitc/'
+    MEDIA_URL = '/media/'
 else:
-    STATIC_URL = f'satitc/'
+    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{S3_STATIC_DIR}/'
     STATICFILES_STORAGE = 'storages.backends.s3boto3.S3StaticStorage'
     STATICFILES_DIRS = [
         os.path.join(BASE_DIR, 'static'),
         # os.path.join(BASE_DIR, 'static/CACHE')
     ]
     STATIC_ROOT = STATIC_URL
+    MEDIA_ROOT = STATIC_URL
+
 
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
     'compressor.finders.CompressorFinder',
 ]
+
+
+SWAGGER_SETTINGS = {
+    'USE_SESSION_AUTH': True,
+    'SECURITY_DEFINITIONS': {
+        'token': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header'
+        }
+    },
+    'FORCE_SCRIPT_NAME': 'https://19ad-41-237-214-120.ngrok-free.app/api/'
+}

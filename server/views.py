@@ -14,18 +14,92 @@ from rest_framework import status
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
+from drf_yasg.utils import swagger_auto_schema
 
 from hashlib import sha256        
 
 
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+from rest_framework.authtoken.models import Token
+from .models import User
+from .serializers import UserSerializer
+
+@swagger_auto_schema(
+    operation_description="Retrieve or create users",
+    methods=['GET'],
+    manual_parameters=[
+        openapi.Parameter(
+            name='username',
+            in_=openapi.IN_QUERY,
+            description="Filter by username (case-insensitive, partial match). Required for GET requests.",
+            type=openapi.TYPE_STRING,
+        )
+    ],
+    responses={
+        200: openapi.Response(
+            description="Successful response for GET requests",
+            schema=openapi.Schema(
+                type=openapi.TYPE_ARRAY,
+                items=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'userid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the user."),
+                        'username': openapi.Schema(type=openapi.TYPE_STRING, description="Username of the user."),
+                        'bio': openapi.Schema(type=openapi.TYPE_STRING, description="Bio of the user."),
+                        'avatar': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_URI, description="Avatar URL of the user."),
+                    },
+                ),
+            ),
+        ),
+    },
+)
+@swagger_auto_schema(
+    operation_description="Create a new user",
+    methods=['POST'],
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'username': openapi.Schema(type=openapi.TYPE_STRING, description="Username of the user."),
+            'password': openapi.Schema(type=openapi.TYPE_STRING, description="Password for the user."),
+            'bio': openapi.Schema(type=openapi.TYPE_STRING, description="Optional bio for the user."),
+            'avatar': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_BINARY, description="Optional avatar image for the user."),
+        },
+        required=['username', 'password'],
+    ),
+    responses={
+        201: openapi.Response(
+            description="Successful response for POST requests",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'token': openapi.Schema(type=openapi.TYPE_STRING, description="Auth token for the created user."),
+                    'user': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'userid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the user."),
+                            'username': openapi.Schema(type=openapi.TYPE_STRING, description="Username of the user."),
+                            'bio': openapi.Schema(type=openapi.TYPE_STRING, description="Bio of the user."),
+                            'avatar': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_URI, description="Avatar URL of the user."),
+                        },
+                    ),
+                },
+            ),
+        ),
+        400: openapi.Response(description="Bad request (validation errors or missing parameters)."),
+    }
+)
 @api_view(['GET', 'POST'])
 def user(request):
-    '''
-    List all users, or create a new user.
-    '''
+    username = request.data.get('username')
+    if not username:
+        return Response({'detail': 'Provide username in the request body'}, status=status.HTTP_400_BAD_REQUEST)
     
     if request.method == 'GET':
-        user = User.objects.all()
+        user = User.objects.filter(username__icontains=username)
         serializer = UserSerializer(user, many=True)
         return Response(serializer.data)
     
@@ -37,12 +111,47 @@ def user(request):
             user.set_password(request.data.get('password'))
             user.save()
             token = Token.objects.get(user=user)
-            
             return Response({'token': token.key, 'user': serializer.data}, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+
+@swagger_auto_schema(
+    operation_description="Authenticate a user and return a token.",
+    methods=['POST'],
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'username': openapi.Schema(type=openapi.TYPE_STRING, description="The username of the user."),
+            'password': openapi.Schema(type=openapi.TYPE_STRING, description="The password of the user."),
+        },
+        required=['username', 'password'],
+    ),
+    responses={
+        201: openapi.Response(
+            description="Authentication successful",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'token': openapi.Schema(type=openapi.TYPE_STRING, description="The authentication token."),
+                    'user': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'userid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the user."),
+                            'username': openapi.Schema(type=openapi.TYPE_STRING, description="Username of the user."),
+                            'bio': openapi.Schema(type=openapi.TYPE_STRING, description="Bio of the user."),
+                            'avatar': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_URI, description="Avatar URL of the user."),
+                            'createdAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Account creation timestamp."),
+                        },
+                    ),
+                },
+            ),
+        ),
+        404: openapi.Response(description="User not found or invalid password."),
+        400: openapi.Response(description="Invalid input data."),
+    }
+)
 @api_view(['POST'])
 def login(request):
     user = get_object_or_404(User, username=request.data.get('username'))
@@ -52,7 +161,98 @@ def login(request):
     serializer = UserSerializer(instance=user)
     return Response({'token': token.key, 'user': serializer.data}, status=status.HTTP_201_CREATED)
     
-@api_view(['GET', 'POST', 'PUT'])
+
+@swagger_auto_schema(
+    methods=['GET'],
+    operation_description="Retrieve all posts created by the authenticated user.",
+    manual_parameters=[
+        openapi.Parameter(
+            'userid',
+            openapi.IN_QUERY,
+            description="The ID of the authenticated user (optional). Defaults to the logged-in user.",
+            type=openapi.TYPE_STRING,
+        ),
+    ],
+    responses={
+        200: openapi.Response(
+            description="List of user's posts",
+            schema=openapi.Schema(
+                type=openapi.TYPE_ARRAY,
+                items=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'postid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the post."),
+                        'caption': openapi.Schema(type=openapi.TYPE_STRING, description="Caption of the post."),
+                        'image': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_URI, description="Image URL of the post."),
+                        'likes_no': openapi.Schema(type=openapi.TYPE_INTEGER, description="Number of likes."),
+                        'createdAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Post creation timestamp."),
+                        'editedAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Last edited timestamp."),
+                    },
+                ),
+            ),
+        ),
+    },
+)
+@swagger_auto_schema(
+    methods=['POST'],
+    operation_description="Create a new post.",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'caption': openapi.Schema(type=openapi.TYPE_STRING, description="Caption of the post."),
+            'image': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_BINARY, description="Image file for the post."),
+        },
+        required=['image'],
+    ),
+    responses={
+        201: openapi.Response(
+            description="Post created successfully",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'postid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the new post."),
+                    'caption': openapi.Schema(type=openapi.TYPE_STRING, description="Caption of the post."),
+                    'image': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_URI, description="Image URL of the post."),
+                    'likes_no': openapi.Schema(type=openapi.TYPE_INTEGER, description="Number of likes."),
+                    'createdAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Post creation timestamp."),
+                    'editedAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Last edited timestamp."),
+                },
+            ),
+        ),
+        400: openapi.Response(description="Invalid input data."),
+    },
+)
+@swagger_auto_schema(
+    methods=['DELETE'],
+    operation_description="Delete a user's post.",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'postid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the post to delete."),
+        },
+        required=['postid'],
+    ),
+    responses={
+        200: openapi.Response(
+            description="Post deleted successfully",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_STRING, description="Success message."),
+                },
+            ),
+        ),
+        404: openapi.Response(description="Post not found."),
+    },
+)
+@swagger_auto_schema(
+    methods=['PUT'],
+    operation_description="Update a user's post (to be implemented in the next version).",
+    responses={
+        501: openapi.Response(description="Not implemented."),
+    },
+)
+@api_view(['GET', 'POST', 'DELETE', 'PUT'])
 @authentication_classes([SessionAuthentication, TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def post(request):
@@ -85,7 +285,56 @@ def post(request):
     elif request.method == 'PUT':
         ... # implemented in the next version
 
+
 @api_view(['GET'])
+@swagger_auto_schema(
+    operation_description="Retrieve the details of a specific post and its likes.",
+    manual_parameters=[
+        openapi.Parameter(
+            'postid',
+            openapi.IN_QUERY,
+            description="The ID of the post to retrieve.",
+            type=openapi.TYPE_STRING,
+            required=True,
+        ),
+    ],
+    responses={
+        200: openapi.Response(
+            description="Post details and likes",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'post': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        description="Details of the requested post",
+                        properties={
+                            'postid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the post."),
+                            'caption': openapi.Schema(type=openapi.TYPE_STRING, description="Caption of the post."),
+                            'image': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_URI, description="Image URL of the post."),
+                            'likes_no': openapi.Schema(type=openapi.TYPE_INTEGER, description="Number of likes."),
+                            'createdAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Post creation timestamp."),
+                            'editedAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Last edited timestamp."),
+                        },
+                    ),
+                    'likes': openapi.Schema(
+                        type=openapi.TYPE_ARRAY,
+                        items=openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'likeid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the like."),
+                                'userid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the user who liked the post."),
+                                'createdAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Timestamp of when the like was created."),
+                            },
+                        ),
+                        description="List of likes for the post",
+                    ),
+                },
+            ),
+        ),
+        404: openapi.Response(description="Post not found."),
+        400: openapi.Response(description="Invalid request. `postid` is required."),
+    },
+)
 @authentication_classes([SessionAuthentication, TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def post_details(request):
@@ -98,6 +347,87 @@ def post_details(request):
 
 
 
+@swagger_auto_schema(
+    methods=['GET'],
+    operation_description="Retrieve likes for a specific post.",
+    manual_parameters=[
+        openapi.Parameter(
+            'postid',
+            openapi.IN_QUERY,
+            description="The ID of the post to retrieve likes for.",
+            type=openapi.TYPE_STRING,
+            required=True,
+        ),
+    ],
+    responses={
+        200: openapi.Response(
+            description="List of likes for the specified post.",
+            schema=openapi.Schema(
+                type=openapi.TYPE_ARRAY,
+                items=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'likeid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the like."),
+                        'userid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the user who liked the post."),
+                        'postid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the liked post."),
+                        'createdAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Timestamp of the like."),
+                    },
+                ),
+            ),
+        ),
+        400: openapi.Response(description="Invalid request. `postid` is required."),
+    },
+)
+@swagger_auto_schema(
+    methods=['POST'],
+    operation_description="Add a like to a specific post.",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'postid': openapi.Schema(type=openapi.TYPE_STRING, description="The ID of the post to like."),
+        },
+        required=['postid'],
+    ),
+    responses={
+        201: openapi.Response(
+            description="Like added successfully.",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'likeid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the new like."),
+                    'userid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the user who liked the post."),
+                    'postid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the liked post."),
+                    'createdAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Timestamp of the like."),
+                },
+            ),
+        ),
+        400: openapi.Response(description="Invalid input data."),
+    },
+)
+@swagger_auto_schema(
+    methods=['DELETE'],
+    operation_description="Delete a like by its ID.",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'likeid': openapi.Schema(type=openapi.TYPE_STRING, description="The ID of the like to delete."),
+        },
+        required=['likeid'],
+    ),
+    responses={
+        200: openapi.Response(
+            description="Like deleted successfully.",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_STRING, description="Success message."),
+                },
+            ),
+        ),
+        404: openapi.Response(description="Like not found."),
+        400: openapi.Response(description="`likeid` is required."),
+    },
+)
 @api_view(['GET', 'POST', 'DELETE'])
 @authentication_classes([SessionAuthentication, TokenAuthentication])
 @permission_classes([IsAuthenticated])
@@ -155,7 +485,80 @@ def like_details(request):
         post = get_object_or_404(Like, pk=likeid)
         serializer = LikeSerializer(instance=like)
         return Response(serializer.data, status=status.HTTP_200_OK)
-        
+
+
+@swagger_auto_schema(
+    methods=['GET'],
+    operation_description="Retrieve the list of users that the authenticated user is following.",
+    responses={
+        200: openapi.Response(
+            description="List of users that the authenticated user is following.",
+            schema=openapi.Schema(
+                type=openapi.TYPE_ARRAY,
+                items=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'followid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the follow relationship."),
+                        'follower': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the follower."),
+                        'following': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the user being followed."),
+                        'createdAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Timestamp when the follow relationship was created."),
+                    },
+                ),
+            ),
+        ),
+        400: openapi.Response(description="No follows found for the authenticated user."),
+    },
+)
+@swagger_auto_schema(
+    methods=['POST'],
+    operation_description="Create a follow relationship between the authenticated user and another user.",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'following': openapi.Schema(type=openapi.TYPE_STRING, description="The ID of the user to follow."),
+        },
+        required=['following'],
+    ),
+    responses={
+        201: openapi.Response(
+            description="Follow created successfully.",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'followid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the new follow relationship."),
+                    'follower': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the follower."),
+                    'following': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the user being followed."),
+                    'createdAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Timestamp when the follow relationship was created."),
+                },
+            ),
+        ),
+        400: openapi.Response(description="Invalid input data."),
+    },
+)
+@swagger_auto_schema(
+    methods=['DELETE'],
+    operation_description="Delete a follow relationship by its ID.",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'followid': openapi.Schema(type=openapi.TYPE_STRING, description="The ID of the follow relationship to delete."),
+        },
+        required=['followid'],
+    ),
+    responses={
+        200: openapi.Response(
+            description="Follow deleted successfully.",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_STRING, description="Success message."),
+                },
+            ),
+        ),
+        404: openapi.Response(description="Follow relationship not found."),
+        400: openapi.Response(description="`followid` is required."),
+    },
+)
 @api_view(['GET', 'POST', 'DELETE'])
 @authentication_classes([SessionAuthentication, TokenAuthentication])
 @permission_classes([IsAuthenticated])
@@ -182,3 +585,40 @@ def follow(request: HttpRequest):
         follow = get_object_or_404(Follow, followid=followid)
         follow.delete()
         return Response({'success': f'follow {followid} has been deleted'}, status=status.HTTP_200_OK)
+    
+
+@swagger_auto_schema(
+    methods=['GET'],
+    operation_description="Retrieve the feed of posts from users that the authenticated user is following.",
+    responses={
+        200: openapi.Response(
+            description="A list of posts from followed users.",
+            schema=openapi.Schema(
+                type=openapi.TYPE_ARRAY,
+                items=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'postid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the post."),
+                        'userid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the user who created the post."),
+                        'caption': openapi.Schema(type=openapi.TYPE_STRING, description="Caption of the post."),
+                        'image': openapi.Schema(type=openapi.TYPE_STRING, description="URL of the post's image."),
+                        'likes_no': openapi.Schema(type=openapi.TYPE_INTEGER, description="Number of likes on the post."),
+                        'createdAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Timestamp when the post was created."),
+                        'editedAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Timestamp when the post was last edited."),
+                    },
+                ),
+            ),
+        ),
+    },
+)
+@api_view(['GET'])
+@authentication_classes([SessionAuthentication, TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def feed(request: HttpRequest):
+    
+    
+    followed_users = Follow.objects.filter(follower=request.user.pk).values_list('following', flat=True)
+    posts = Post.objects.filter(userid__in=followed_users).order_by('-createdAt')
+    serializer = PostSerializer(posts, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
