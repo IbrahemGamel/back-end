@@ -149,13 +149,13 @@ AUTH_USER_MODEL = 'server.User'
 
 
 
-AWS_S3_ACCESS_KEY_ID = os.environ.get("AWS_S3_ACCESS_KEY_ID")
-AWS_S3_SECRET_ACCESS_KEY = os.environ.get("AWS_S3_SECRET_ACCESS_KEY")
-AWS_STORAGE_BUCKET_NAME = ''
+AWS_S3_ACCESS_KEY_ID='da1c1bae8d8f8e6755b181c007779702'
+AWS_S3_SECRET_ACCESS_KEY='31e5ba713439fc649e1b7d929366a44da98ac50268afed0cb10ab26b3d6abdc5'
+AWS_STORAGE_BUCKET_NAME = 'rewardapp'
 AWS_S3_SIGNATURE_VERSION = 's3v4'
-# AWS_S3_CUSTOM_DOMAIN = 'static.blasome.xyz'
+AWS_S3_CUSTOM_DOMAIN = 'static.blasome.xyz'
 S3_STATIC_DIR = ''
-AWS_S3_ENDPOINT_URL = f'https://pub-9c1b5e6896794e9997c1b396dfa377bb.r2.dev'
+AWS_S3_ENDPOINT_URL = f'https://5b9b7243bdbd4c8375b878eba3ac71e5.eu.r2.cloudflarestorage.com'
 
 if DEBUG:
     STATIC_URL = 'satitc/'
