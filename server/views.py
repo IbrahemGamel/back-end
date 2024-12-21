@@ -47,7 +47,7 @@ from .serializers import UserSerializer
                 items=openapi.Schema(
                     type=openapi.TYPE_OBJECT,
                     properties={
-                        'userid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the user."),
+                        'userid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the user."),
                         'username': openapi.Schema(type=openapi.TYPE_STRING, description="Username of the user."),
                         'bio': openapi.Schema(type=openapi.TYPE_STRING, description="Bio of the user."),
                         'avatar': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_URI, description="Avatar URL of the user."),
@@ -64,7 +64,7 @@ from .serializers import UserSerializer
         type=openapi.TYPE_OBJECT,
         properties={
             'username': openapi.Schema(type=openapi.TYPE_STRING, description="Username of the user."),
-            'password': openapi.Schema(type=openapi.TYPE_STRING, description="Password for the user."),
+            'password': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_PASSWORD, description="Password for the user."),
             'bio': openapi.Schema(type=openapi.TYPE_STRING, description="Optional bio for the user."),
             'avatar': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_BINARY, description="Optional avatar image for the user."),
         },
@@ -80,7 +80,7 @@ from .serializers import UserSerializer
                     'user': openapi.Schema(
                         type=openapi.TYPE_OBJECT,
                         properties={
-                            'userid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the user."),
+                            'userid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the user."),
                             'username': openapi.Schema(type=openapi.TYPE_STRING, description="Username of the user."),
                             'bio': openapi.Schema(type=openapi.TYPE_STRING, description="Bio of the user."),
                             'avatar': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_URI, description="Avatar URL of the user."),
@@ -138,7 +138,7 @@ def user(request):
                     'user': openapi.Schema(
                         type=openapi.TYPE_OBJECT,
                         properties={
-                            'userid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the user."),
+                            'userid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the user."),
                             'username': openapi.Schema(type=openapi.TYPE_STRING, description="Username of the user."),
                             'bio': openapi.Schema(type=openapi.TYPE_STRING, description="Bio of the user."),
                             'avatar': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_URI, description="Avatar URL of the user."),
@@ -181,7 +181,7 @@ def login(request):
                 items=openapi.Schema(
                     type=openapi.TYPE_OBJECT,
                     properties={
-                        'postid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the post."),
+                        'postid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the post."),
                         'caption': openapi.Schema(type=openapi.TYPE_STRING, description="Caption of the post."),
                         'image': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_URI, description="Image URL of the post."),
                         'likes_no': openapi.Schema(type=openapi.TYPE_INTEGER, description="Number of likes."),
@@ -210,7 +210,7 @@ def login(request):
             schema=openapi.Schema(
                 type=openapi.TYPE_OBJECT,
                 properties={
-                    'postid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the new post."),
+                    'postid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the new post."),
                     'caption': openapi.Schema(type=openapi.TYPE_STRING, description="Caption of the post."),
                     'image': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_URI, description="Image URL of the post."),
                     'likes_no': openapi.Schema(type=openapi.TYPE_INTEGER, description="Number of likes."),
@@ -228,7 +228,7 @@ def login(request):
     request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
-            'postid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the post to delete."),
+            'postid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the post to delete."),
         },
         required=['postid'],
     ),
@@ -296,6 +296,7 @@ def post(request):
             description="The ID of the post to retrieve.",
             type=openapi.TYPE_STRING,
             required=True,
+            format=openapi.FORMAT_UUID,
         ),
     ],
     responses={
@@ -308,7 +309,7 @@ def post(request):
                         type=openapi.TYPE_OBJECT,
                         description="Details of the requested post",
                         properties={
-                            'postid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the post."),
+                            'postid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the post."),
                             'caption': openapi.Schema(type=openapi.TYPE_STRING, description="Caption of the post."),
                             'image': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_URI, description="Image URL of the post."),
                             'likes_no': openapi.Schema(type=openapi.TYPE_INTEGER, description="Number of likes."),
@@ -321,8 +322,8 @@ def post(request):
                         items=openapi.Schema(
                             type=openapi.TYPE_OBJECT,
                             properties={
-                                'likeid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the like."),
-                                'userid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the user who liked the post."),
+                                'likeid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the like."),
+                                'userid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the user who liked the post."),
                                 'createdAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Timestamp of when the like was created."),
                             },
                         ),
@@ -357,6 +358,7 @@ def post_details(request):
             description="The ID of the post to retrieve likes for.",
             type=openapi.TYPE_STRING,
             required=True,
+            format=openapi.FORMAT_UUID,
         ),
     ],
     responses={
@@ -367,9 +369,9 @@ def post_details(request):
                 items=openapi.Schema(
                     type=openapi.TYPE_OBJECT,
                     properties={
-                        'likeid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the like."),
-                        'userid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the user who liked the post."),
-                        'postid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the liked post."),
+                        'likeid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the like."),
+                        'userid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the user who liked the post."),
+                        'postid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the liked post."),
                         'createdAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Timestamp of the like."),
                     },
                 ),
@@ -384,7 +386,7 @@ def post_details(request):
     request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
-            'postid': openapi.Schema(type=openapi.TYPE_STRING, description="The ID of the post to like."),
+            'postid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="The ID of the post to like."),
         },
         required=['postid'],
     ),
@@ -394,9 +396,9 @@ def post_details(request):
             schema=openapi.Schema(
                 type=openapi.TYPE_OBJECT,
                 properties={
-                    'likeid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the new like."),
-                    'userid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the user who liked the post."),
-                    'postid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the liked post."),
+                    'likeid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the new like."),
+                    'userid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the user who liked the post."),
+                    'postid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the liked post."),
                     'createdAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Timestamp of the like."),
                 },
             ),
@@ -498,9 +500,9 @@ def like_details(request):
                 items=openapi.Schema(
                     type=openapi.TYPE_OBJECT,
                     properties={
-                        'followid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the follow relationship."),
-                        'follower': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the follower."),
-                        'following': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the user being followed."),
+                        'followid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the follow relationship."),
+                        'follower': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the follower."),
+                        'following': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the user being followed."),
                         'createdAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Timestamp when the follow relationship was created."),
                     },
                 ),
@@ -515,7 +517,7 @@ def like_details(request):
     request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
-            'following': openapi.Schema(type=openapi.TYPE_STRING, description="The ID of the user to follow."),
+            'following': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="The ID of the user to follow."),
         },
         required=['following'],
     ),
@@ -525,9 +527,9 @@ def like_details(request):
             schema=openapi.Schema(
                 type=openapi.TYPE_OBJECT,
                 properties={
-                    'followid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the new follow relationship."),
-                    'follower': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the follower."),
-                    'following': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the user being followed."),
+                    'followid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the new follow relationship."),
+                    'follower': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the follower."),
+                    'following': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the user being followed."),
                     'createdAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Timestamp when the follow relationship was created."),
                 },
             ),
@@ -541,7 +543,7 @@ def like_details(request):
     request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
-            'followid': openapi.Schema(type=openapi.TYPE_STRING, description="The ID of the follow relationship to delete."),
+            'followid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="The ID of the follow relationship to delete."),
         },
         required=['followid'],
     ),
@@ -598,8 +600,8 @@ def follow(request: HttpRequest):
                 items=openapi.Schema(
                     type=openapi.TYPE_OBJECT,
                     properties={
-                        'postid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the post."),
-                        'userid': openapi.Schema(type=openapi.TYPE_STRING, description="UUID of the user who created the post."),
+                        'postid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the post."),
+                        'userid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the user who created the post."),
                         'caption': openapi.Schema(type=openapi.TYPE_STRING, description="Caption of the post."),
                         'image': openapi.Schema(type=openapi.TYPE_STRING, description="URL of the post's image."),
                         'likes_no': openapi.Schema(type=openapi.TYPE_INTEGER, description="Number of likes on the post."),
