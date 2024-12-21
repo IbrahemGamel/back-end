@@ -622,5 +622,6 @@ def feed(request: HttpRequest):
     followed_users = Follow.objects.filter(follower=request.user.pk).values_list('following', flat=True)
     posts = Post.objects.filter(userid__in=followed_users).order_by('-createdAt')
     serializer = PostSerializer(posts, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    print(serializer.data)
+    return Response([{'user':UserSerializer(User.objects.get(pk=post['userid'])).data,'post':post} for post in serializer.data], status=status.HTTP_200_OK)
 

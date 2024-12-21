@@ -28,3 +28,4 @@ class FollowSerializer(serializers.ModelSerializer):
     class Meta:
         model = Follow
         fields = ['followid', 'follower', 'following', 'createdAt']
+        

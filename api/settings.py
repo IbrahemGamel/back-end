@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-=#9zfrop7kvs&g-=f0h5q!em*6pc#es^yl&2z6g%afu8r1(hun'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,[::1],*").split(",")
 
@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'storages',
     'compressor', 
-    
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -55,6 +55,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 REST_FRAMEWORK = {
@@ -161,10 +162,10 @@ if DEBUG:
 else:
     STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{S3_STATIC_DIR}/'
     STATICFILES_STORAGE = 'storages.backends.s3boto3.S3StaticStorage'
-    STATICFILES_DIRS = [
-        os.path.join(BASE_DIR, 'static'),
-        # os.path.join(BASE_DIR, 'static/CACHE')
-    ]
+    # STATICFILES_DIRS = [
+    #     os.path.join(BASE_DIR, 'static'),
+    #     # os.path.join(BASE_DIR, 'static/CACHE')
+    # ]
     STATIC_ROOT = STATIC_URL
     MEDIA_ROOT = STATIC_URL
 
@@ -187,3 +188,8 @@ SWAGGER_SETTINGS = {
     },
     'FORCE_SCRIPT_NAME': 'https://19ad-41-237-214-120.ngrok-free.app/api/'
 }
+
+
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = ['*']
