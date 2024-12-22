@@ -600,6 +600,16 @@ def follow(request: HttpRequest):
                 items=openapi.Schema(
                     type=openapi.TYPE_OBJECT,
                     properties={
+                        'user': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'userid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the user."),
+                            'username': openapi.Schema(type=openapi.TYPE_STRING, description="Username of the user."),
+                            'bio': openapi.Schema(type=openapi.TYPE_STRING, description="Bio of the user."),
+                            'avatar': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_URI, description="Avatar URL of the user."),
+                            'createdAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Account creation timestamp."),
+                        },
+                    ),
                         'postid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the post."),
                         'userid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the user who created the post."),
                         'caption': openapi.Schema(type=openapi.TYPE_STRING, description="Caption of the post."),
