@@ -99,9 +99,9 @@ from .serializers import UserSerializer
 )
 @api_view(['GET', 'POST'])
 def user(request):
-    username = request.data.get('username')
+    username = request.query_params.get('username')
     if not username:
-        return Response({'detail': 'Provide username in the request body'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': 'Parameter username is missing'}, status=status.HTTP_400_BAD_REQUEST)
     
     if request.method == 'GET':
         user = User.objects.filter(username__icontains=username)
@@ -448,13 +448,13 @@ def like(request):
     '''
     
     if request.method == 'GET':
-        postid = request.data.get('postid')
+        postid = request.query_params.get('postid')
         if postid:
             likes = Like.objects.filter(postid=postid)
             serializer = LikeSerializer(likes, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response({'detail': 'Please provide postid in request body'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'Parameter postid is missing'}, status=status.HTTP_400_BAD_REQUEST)
             
         
     elif request.method == 'POST':
