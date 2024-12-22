@@ -82,8 +82,13 @@ from .serializers import UserSerializer
                         properties={
                             'userid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the user."),
                             'username': openapi.Schema(type=openapi.TYPE_STRING, description="Username of the user."),
-                            'bio': openapi.Schema(type=openapi.TYPE_STRING, description="Bio of the user."),
                             'avatar': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_URI, description="Avatar URL of the user."),
+                            'bio': openapi.Schema(type=openapi.TYPE_STRING, description="Bio of the user."),
+                            'createdAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Timestamp when the post was created."),
+                            'editedAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Timestamp when the post was last edited."),
+                            'lastactive': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Timestamp when user last seen."),
+
+                            
                         },
                     ),
                 },
@@ -140,9 +145,11 @@ def user(request):
                         properties={
                             'userid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the user."),
                             'username': openapi.Schema(type=openapi.TYPE_STRING, description="Username of the user."),
-                            'bio': openapi.Schema(type=openapi.TYPE_STRING, description="Bio of the user."),
                             'avatar': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_URI, description="Avatar URL of the user."),
-                            'createdAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Account creation timestamp."),
+                            'bio': openapi.Schema(type=openapi.TYPE_STRING, description="Bio of the user."),
+                            'createdAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Timestamp when the post was created."),
+                            'editedAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Timestamp when the post was last edited."),
+                            'lastactive': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Timestamp when user last seen."),
                         },
                     ),
                 },
@@ -605,12 +612,14 @@ def follow(request: HttpRequest):
                         properties={
                             'userid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the user."),
                             'username': openapi.Schema(type=openapi.TYPE_STRING, description="Username of the user."),
-                            'bio': openapi.Schema(type=openapi.TYPE_STRING, description="Bio of the user."),
                             'avatar': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_URI, description="Avatar URL of the user."),
-                            'createdAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Account creation timestamp."),
+                            'bio': openapi.Schema(type=openapi.TYPE_STRING, description="Bio of the user."),
+                            'createdAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Timestamp when the post was created."),
+                            'editedAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Timestamp when the post was last edited."),
+                            'lastactive': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Timestamp when user last seen."),
                             },
                         ),
-                        'user': openapi.Schema(
+                        'post': openapi.Schema(
                         type=openapi.TYPE_OBJECT,
                         properties={
                             'postid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the post."),
