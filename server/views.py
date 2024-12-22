@@ -109,7 +109,9 @@ def user(request):
         return Response(serializer.data)
     
     elif request.method == 'POST':
-        serializer = UserSerializer(data=request.data)
+        data = request.data.copy()
+        data['avatar'] = request.FILES.get('avatar')
+        serializer = UserSerializer(data=data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             user = User.objects.get(username=request.data.get('username'))

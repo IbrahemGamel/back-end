@@ -12,7 +12,9 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
 
+load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -26,9 +28,9 @@ SECRET_KEY = 'django-insecure-=#9zfrop7kvs&g-=f0h5q!em*6pc#es^yl&2z6g%afu8r1(hun
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,[::1],*").split(",")
+# ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,[::1],*").split(",")
 
-
+ALLOWED_HOSTS = ['127.0.0.1', '*']
 # Application definition
 
 INSTALLED_APPS = [
@@ -94,7 +96,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'koyebdb',
         'USER': 'koyeb-adm',
-        'PASSWORD': 'CDAE1KRje4vL',
+        'PASSWORD': os.getenv("DB_PASSWORD"),
         'HOST': 'ep-raspy-forest-a2ql68z1.eu-central-1.pg.koyeb.app',
         'OPTIONS': {'sslmode': 'require'},
     }
@@ -151,9 +153,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'server.User'
 
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
-AWS_S3_ACCESS_KEY_ID = os.environ.get("AWS_S3_ACCESS_KEY_ID")
-AWS_S3_SECRET_ACCESS_KEY = os.environ.get("AWS_S3_SECRET_ACCESS_KEY")
+
+AWS_S3_ACCESS_KEY_ID = os.getenv("AWS_S3_ACCESS_KEY_ID")
+AWS_S3_SECRET_ACCESS_KEY = os.getenv("AWS_S3_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = 'rewardstatic'
 AWS_S3_SIGNATURE_VERSION = 's3v4'
 AWS_S3_CUSTOM_DOMAIN = 'static.blasome.xyz'
@@ -163,6 +167,8 @@ AWS_S3_ENDPOINT_URL = f'https://5b9b7243bdbd4c8375b878eba3ac71e5.r2.cloudflarest
 if DEBUG:
     STATIC_URL = 'satitc/'
     MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 else:
     STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{S3_STATIC_DIR}/'
     STATICFILES_STORAGE = 'storages.backends.s3boto3.S3StaticStorage'
@@ -171,7 +177,7 @@ else:
     #     # os.path.join(BASE_DIR, 'static/CACHE')
     # ]
     STATIC_ROOT = STATIC_URL
-    MEDIA_ROOT = STATIC_URL
+    MEDIA_ROOT = os.path.join(STATIC_URL, 'image'),
 
 
 STATICFILES_FINDERS = [

@@ -12,7 +12,7 @@ import uuid
 class User(AbstractUser):
     userid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False,)
     username = models.CharField(null=False, max_length=64, unique=True)
-    avatar = models.ImageField(null=True)
+    avatar = models.ImageField(upload_to='images', null=True)
     bio = models.TextField(null=True, max_length=256)
     createdAt = models.DateTimeField(auto_now_add=True)
     editedAt = models.DateTimeField(auto_now=True)
