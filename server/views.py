@@ -256,10 +256,26 @@ def login(request):
     },
 )
 @swagger_auto_schema(
-    methods=['PUT'],
-    operation_description="Update a user's post (to be implemented in the next version).",
+     methods=['PUT'],
+    operation_description="Update an existing post. The user can update fields like caption and image.",
+    request_body=PostSerializer,  # Specify the serializer for request validation
     responses={
-        501: openapi.Response(description="Not implemented."),
+        200: openapi.Response(
+            description="Successfully updated the post.",
+            schema=PostSerializer()
+        ),
+        400: openapi.Response(
+            description="Invalid input.",
+            examples={
+                "application/json": {"caption": ["This field may not be blank."]}
+            },
+        ),
+        404: openapi.Response(
+            description="Post not found.",
+            examples={
+                "application/json": {"detail": "Not found."}
+            },
+        ),
     },
 )
 @api_view(['GET', 'POST', 'DELETE', 'PUT'])
@@ -293,7 +309,14 @@ def post(request):
         post.delete()
         return Response({'success': f'post {postid} has been deleted'}, status=status.HTTP_200_OK)
     elif request.method == 'PUT':
-        ... # implemented in the next version
+        post = get_object_or_404(Post, postid=postid)
+    
+        serializer = PostSerializer(instance=post, data=request.data, partial=False)
+        if serializer.is_valid():
+            serializer.save() 
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
