@@ -287,7 +287,8 @@ def post(request):
     '''
     
     if request.method == 'GET':
-        userid = request.paramslist.get('userid')
+        userid = request.paramslist.get('userid') 
+        userid = userid if userid else request.user.pk
         post = Post.objects.filter(userid=userid)
         serializer = PostSerializer(post, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
