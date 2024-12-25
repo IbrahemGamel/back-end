@@ -771,11 +771,11 @@ def is_liked(request: HttpRequest):
 )
 @api_view(['GET'])
 def is_following(request: HttpRequest):
-    followingid = request.query_params.get('following')
-    followerid = request.query_params.get('follower')
+    followingid = request.query_params.get('followingid')
+    followerid = request.query_params.get('followerid')
     
-    like = get_object_or_404(Follow, following=followingid, follower=followerid)
-    serializer = FollowSerializer(like)
+    follow = get_object_or_404(Follow, following=followingid, follower=followerid)
+    serializer = FollowSerializer(follow)
     return Response(serializer.data, status=status.HTTP_200_OK)
     
     
