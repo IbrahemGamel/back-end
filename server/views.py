@@ -287,7 +287,7 @@ def post(request):
     '''
     
     if request.method == 'GET':
-        userid = request.paramslist.get('userid') 
+        userid = request.query_params.get('userid') 
         userid = userid if userid else request.user.pk
         post = Post.objects.filter(userid=userid)
         serializer = PostSerializer(post, many=True)
@@ -671,7 +671,6 @@ def feed(request: HttpRequest):
     followed_users = Follow.objects.filter(follower=request.user.pk).values_list('following', flat=True)
     posts = Post.objects.filter(userid__in=followed_users).order_by('-createdAt')
     serializer = PostSerializer(posts, many=True)
-    print(serializer.data)
     return Response([{'user':UserSerializer(User.objects.get(pk=post['userid'])).data,'post':post} for post in serializer.data], status=status.HTTP_200_OK)
 
 #test
