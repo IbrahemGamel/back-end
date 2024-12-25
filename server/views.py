@@ -99,11 +99,12 @@ from .serializers import UserSerializer
 )
 @api_view(['GET', 'POST'])
 def user(request):
-    username = request.query_params.get('username')
-    if not username:
-        return Response({'detail': 'Parameter username is missing'}, status=status.HTTP_400_BAD_REQUEST)
+    
     
     if request.method == 'GET':
+        username = request.query_params.get('username')
+        if not username:
+            return Response({'detail': 'Parameter username is missing'}, status=status.HTTP_400_BAD_REQUEST)
         user = User.objects.filter(username__icontains=username)
         serializer = UserSerializer(user, many=True)
         return Response(serializer.data)
@@ -173,7 +174,7 @@ def login(request):
 
 @swagger_auto_schema(
     methods=['GET'],
-    operation_description="Retrieve all posts created by the authenticated user.",
+    operation_description="Retrieve all posts created by the userid provided.",
     manual_parameters=[
         openapi.Parameter(
             'userid',
@@ -270,7 +271,7 @@ def post(request):
     '''
     
     if request.method == 'GET':
-        userid = request.user.userid
+        userid = request.paramslist.get('userid')
         post = Post.objects.filter(userid=userid)
         serializer = PostSerializer(post, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -421,9 +422,9 @@ def post_details(request):
     request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
-            'likeid': openapi.Schema(type=openapi.TYPE_STRING, description="The ID of the like to delete."),
+            'postid': openapi.Schema(type=openapi.TYPE_STRING, description="The ID of the post to unlike"),
         },
-        required=['likeid'],
+        required=['postid'],
     ),
     responses={
         200: openapi.Response(
@@ -436,7 +437,7 @@ def post_details(request):
             ),
         ),
         404: openapi.Response(description="Like not found."),
-        400: openapi.Response(description="`likeid` is required."),
+        400: openapi.Response(description="`postid` is required."),
     },
 )
 @api_view(['GET', 'POST', 'DELETE'])
@@ -472,11 +473,11 @@ def like(request):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     elif request.method == 'DELETE':
-        likeid = request.data.get('likeid')
-        if likeid is None:
+        postid = request.data.get('postid')
+        if postid is None:
             return Response({'likeid': f'This field is necessary, provide it in request body'}, status=status.HTTP_200_OK)
             
-        like = get_object_or_404(Like, likeid=likeid)
+        like = get_object_or_404(Like, userid=request.user.pk, postid=postid)
         like.postid.likes_no -= 1
         like.postid.save()
         like.delete()
@@ -643,8 +644,6 @@ def follow(request: HttpRequest):
 @authentication_classes([SessionAuthentication, TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def feed(request: HttpRequest):
-    
-    
     followed_users = Follow.objects.filter(follower=request.user.pk).values_list('following', flat=True)
     posts = Post.objects.filter(userid__in=followed_users).order_by('-createdAt')
     serializer = PostSerializer(posts, many=True)
@@ -652,3 +651,108 @@ def feed(request: HttpRequest):
     return Response([{'user':UserSerializer(User.objects.get(pk=post['userid'])).data,'post':post} for post in serializer.data], status=status.HTTP_200_OK)
 
 #test
+
+
+
+@swagger_auto_schema(
+    methods=['GET'],
+    operation_description="Used to check if a user liked a post.",
+    manual_parameters=[
+        openapi.Parameter(
+            'postid',
+            openapi.IN_QUERY,
+            description="The ID of the post to check like for.",
+            type=openapi.TYPE_STRING,
+            required=True,
+            format=openapi.FORMAT_UUID,
+        ),
+        openapi.Parameter(
+            'userid',
+            openapi.IN_QUERY,
+            description="The ID of the user to check like for.",
+            type=openapi.TYPE_STRING,
+            required=True,
+            format=openapi.FORMAT_UUID,
+        ),
+    ],
+    responses={
+        200: openapi.Response(
+            description="The like for the specified post.",
+            schema=openapi.Schema(
+                type=openapi.TYPE_ARRAY,
+                items=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'likeid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the like."),
+                        'userid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the user who liked the post."),
+                        'postid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the liked post."),
+                        'createdAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Timestamp of the like."),
+                    },
+                ),
+            ),
+        ),
+        404: openapi.Response(description="Not found."),
+    },
+)
+@api_view(['GET'])
+def is_liked(request: HttpRequest):
+    postid = request.query_params.get('postid')
+    userid = request.query_params.get('userid')
+    
+    like = get_object_or_404(Like, postid=postid, userid=userid)
+    serializer = LikeSerializer(like)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+@swagger_auto_schema(
+    methods=['GET'],
+    operation_description="Used to check if a user is following another user.",
+    manual_parameters=[
+        openapi.Parameter(
+            'followerid',
+            openapi.IN_QUERY,
+            description="The ID of the user to check if he is following the other user.",
+            type=openapi.TYPE_STRING,
+            required=True,
+            format=openapi.FORMAT_UUID,
+        ),
+        openapi.Parameter(
+            'followingid',
+            openapi.IN_QUERY,
+            description="The ID of the user to check if he is followed by the first user.",
+            type=openapi.TYPE_STRING,
+            required=True,
+            format=openapi.FORMAT_UUID,
+        ),
+    ],
+    responses={
+        200: openapi.Response(
+            description="The Follow for the specified query.",
+            schema=openapi.Schema(
+                type=openapi.TYPE_ARRAY,
+                items=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'likeid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the like."),
+                        'userid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the user who liked the post."),
+                        'postid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the liked post."),
+                        'createdAt': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, description="Timestamp of the like."),
+                    },
+                ),
+            ),
+        ),
+        404: openapi.Response(description="Not found."),
+    },
+)
+@api_view(['GET'])
+def is_following(request: HttpRequest):
+    followingid = request.query_params.get('following')
+    followerid = request.query_params.get('follower')
+    
+    like = get_object_or_404(Follow, following=followingid, follower=followerid)
+    serializer = FollowSerializer(like)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    
+    
