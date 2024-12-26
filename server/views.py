@@ -258,7 +258,15 @@ def login(request):
 @swagger_auto_schema(
      methods=['PUT'],
     operation_description="Update an existing post. The user can update fields like caption and image.",
-    request_body=PostSerializer,  # Specify the serializer for request validation
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'postid': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_UUID, description="UUID of the post to delete."),
+            'caption': openapi.Schema(type=openapi.TYPE_STRING, description="The new caption for the post."),
+            'image': openapi.Schema(type=openapi.TYPE_STRING, description="The new image for the post."),
+        },
+        required=['postid'],
+    ),  # Specify the serializer for request validation
     responses={
         200: openapi.Response(
             description="Successfully updated the post.",
@@ -310,14 +318,14 @@ def post(request):
         post.delete()
         return Response({'success': f'post {postid} has been deleted'}, status=status.HTTP_200_OK)
     elif request.method == 'PUT':
+        postid = request.data.get('postid')
+        caption = request.data.get('caption')
+        image = request.FILES.get('image')
         post = get_object_or_404(Post, postid=postid)
-    
-        serializer = PostSerializer(instance=post, data=request.data, partial=False)
-        if serializer.is_valid():
-            serializer.save() 
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        post.caption = caption
+        post.image = image
+        post.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
