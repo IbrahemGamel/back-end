@@ -679,7 +679,7 @@ def follow(request: HttpRequest):
 @permission_classes([IsAuthenticated])
 def feed(request: HttpRequest):
     followed_users = Follow.objects.filter(follower=request.user.pk).values_list('following', flat=True)
-    posts = Post.objects.filter(userid__in=followed_users).order_by('-createdAt')
+    posts = Post.objects.filter(userid__in=followed_users)
     serializer = PostSerializer(posts, many=True)
     return Response([{'user':UserSerializer(User.objects.get(pk=post['userid'])).data,'post':post} for post in serializer.data], status=status.HTTP_200_OK)
 
