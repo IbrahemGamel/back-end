@@ -325,6 +325,8 @@ def post(request):
         post.caption = caption
         post.image = image
         post.save()
+        
+        serializer = PostSerializer(instance=post)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
